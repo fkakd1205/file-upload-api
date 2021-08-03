@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image File Upload</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <form id="upload-file-form" enctype="multipart/form-data" method="post">
+        <input id="upload-file-input" type="file" name="uploadfile" accept="image/*" onchange="fileTypeCheck(this);" multiple/>
+        <input type="button" value="확인" onclick="uploadFile();" />
+    </form>
+    <script>
+        // 업로드 파일 확장자 제한
+        function fileTypeCheck(obj) {
+            var fileKind = obj.value.lastIndexOf('.');
+            var fileName = obj.value.substring(fileKind+1, obj.length);
+            var fileType = fileName.toLowerCase();
+            var checkType = ['jpg', 'gif', ,'png','jpeg','bmp','tif'];
+
+            if(checkType.indexOf(fileType) == -1){
+                alert('Only image file can be uploaded.');
+                obj.value = '';
+            }
+        }
+
+        function uploadFile() {
+            var formData = new FormData();
+
+            var fileSize = $("#upload-file-input")[0].files.length;
+            var urlPath = fileSize == 0? "/api/v1/file-upload/uploadFile" : "/api/v1/file-upload/uploadFiles";
+            var key = fileSize == 0? "file" : "files";
+
+            for(var i = 0; i < fileSize; i++) {
+                formData.append(key, $("#upload-file-input")[0].files[i]);
+            }
+
+            if(fileSize == 0){
+                alert('Please select an image');
+            }
+
+            $.ajax({
+                url: urlPath,
+                type: "POST",
+                data: formData,
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                cache: false,
+                success: function(data) {
+                    console.log(data);
+                },
+                error: function(e) {
+                    console.log("File Upload Error : ", e);
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
