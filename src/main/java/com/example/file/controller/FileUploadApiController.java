@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileUploadApiController {
     
     @Autowired
-    private FileUploadService fileUploadservice;
+    private FileUploadService fileUploadService;
 
     /**
      * Upload files api for image files to local.
@@ -37,7 +37,7 @@ public class FileUploadApiController {
         
         // file extension check.
         try{
-            fileUploadservice.isImageFile(files);
+            fileUploadService.isImageFile(files);
         } catch(Exception e){
             message.setStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             message.setMessage("file_extension_error");
@@ -46,7 +46,7 @@ public class FileUploadApiController {
         }
 
         try{
-            message.setData(fileUploadservice.uploadFilesToLocal(files));
+            message.setData(fileUploadService.uploadFilesToLocal(files));
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
@@ -73,7 +73,7 @@ public class FileUploadApiController {
 
         // file extension check.
         try{
-            fileUploadservice.isImageFile(files);
+            fileUploadService.isImageFile(files);
         } catch(Exception e){
             message.setStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             message.setMessage("file_extension_error");
@@ -82,7 +82,7 @@ public class FileUploadApiController {
         }
 
         try{
-            message.setData(fileUploadservice.uploadFilesToCloud(files));
+            message.setData(fileUploadService.uploadFilesToCloud(files));
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
