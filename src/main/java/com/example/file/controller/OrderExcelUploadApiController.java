@@ -5,9 +5,9 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.example.file.model.excel_upload.ExcelUploadGetDto;
+import com.example.file.model.excel_upload.NaverOrderGetDto;
 import com.example.file.model.message.Message;
-import com.example.file.service.excel_upload.ExcelUploadService;
+import com.example.file.service.naver_order.OrderExcelUploadService;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -25,11 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/excel")
-public class ExcelUploadApiController {
+@RequestMapping("/api/v1/order-excel")
+public class OrderExcelUploadApiController {
     
     @Autowired
-    private ExcelUploadService excelUploadService;
+    private OrderExcelUploadService orderExcelUploadService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadExcelFile(@RequestParam("file") MultipartFile file) throws IOException {
@@ -37,7 +37,7 @@ public class ExcelUploadApiController {
 
         // file extension check.
         try{
-            excelUploadService.isExcelFile(file);
+            orderExcelUploadService.isExcelFile(file);
         } catch(Exception e){
             message.setStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             message.setMessage("file_extension_error");
@@ -46,7 +46,7 @@ public class ExcelUploadApiController {
         }
 
         try{
-            message.setData(excelUploadService.uploadExcelFile(file));
+            message.setData(orderExcelUploadService.uploadExcelFile(file));
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
@@ -58,7 +58,7 @@ public class ExcelUploadApiController {
     }
 
     @PostMapping("/download")
-    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<ExcelUploadGetDto> dto) {
+    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<NaverOrderGetDto> dto) {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("첫번째 시트");
         Row row = null;
@@ -67,40 +67,61 @@ public class ExcelUploadApiController {
 
         row = sheet.createRow(rowNum++);
         cell = row.createCell(0);
-        cell.setCellValue("구매자명");
+        cell.setCellValue("받는사람");
         cell = row.createCell(1);
-        cell.setCellValue("상품명");
+        cell.setCellValue("전화번호1");
         cell = row.createCell(2);
-        cell.setCellValue("상품코드");
+        cell.setCellValue("우편번호");
         cell = row.createCell(3);
-        cell.setCellValue("배송지");
+        cell.setCellValue("주소");
         cell = row.createCell(4);
-        cell.setCellValue("구매자 연락처");
+        cell.setCellValue("운송장번호");
         cell = row.createCell(5);
-        cell.setCellValue("배송 메세지");
+        cell.setCellValue("상품명1");
+        cell = row.createCell(6);
+        cell.setCellValue("보내는사람(지정)");
+        cell = row.createCell(7);
+        cell.setCellValue("전화번호1(지정)");
+        cell = row.createCell(8);
+        cell.setCellValue("상품상세1");
+        cell = row.createCell(9);
+        cell.setCellValue("내품수량1");
+        cell = row.createCell(10);
+        cell.setCellValue("배송메시지");
+        cell = row.createCell(11);
+        cell.setCellValue("수량(A타입)");
 
         for (int i=0; i<dto.size(); i++) {
             row = sheet.createRow(rowNum++);
             cell = row.createCell(0);
-            cell.setCellValue(dto.get(i).getBuyer());
+            cell.setCellValue(dto.get(i).getReceiver());
             cell = row.createCell(1);
-            cell.setCellValue(dto.get(i).getProductName());
+            cell.setCellValue(dto.get(i).getReceiverContact1());
             cell = row.createCell(2);
-            cell.setCellValue(dto.get(i).getProductCode());
+            cell.setCellValue(dto.get(i).getZipCode());
             cell = row.createCell(3);
             cell.setCellValue(dto.get(i).getDestination());
             cell = row.createCell(4);
-            cell.setCellValue(dto.get(i).getBuyerContact());
+            cell.setCellValue(dto.get(i).getTranportNumber());
             cell = row.createCell(5);
+            cell.setCellValue(dto.get(i).getProdName1());
+            cell = row.createCell(6);
+            cell.setCellValue(dto.get(i).getSender());
+            cell = row.createCell(7);
+            cell.setCellValue(dto.get(i).getSenderContact1());
+            cell = row.createCell(8);
+            cell.setCellValue(dto.get(i).getProdDetail1());
+            cell = row.createCell(9);
+            cell.setCellValue(dto.get(i).getUnit1());
+            cell = row.createCell(10);
             cell.setCellValue(dto.get(i).getDeliveryMessage());
+            cell = row.createCell(11);
+            cell.setCellValue(dto.get(i).getUnitA());
         }
 
-        sheet.autoSizeColumn(0);
-        sheet.autoSizeColumn(1);
-        sheet.autoSizeColumn(2);
-        sheet.autoSizeColumn(3);
-        sheet.autoSizeColumn(4);
-        sheet.autoSizeColumn(5);
+        for(int i = 0; i < 12; i++){
+            sheet.autoSizeColumn(i);
+        }
 
         response.setContentType("ms-vnd/excel");
         response.setHeader("Content-Disposition", "attachment;filename=example.xlsx");

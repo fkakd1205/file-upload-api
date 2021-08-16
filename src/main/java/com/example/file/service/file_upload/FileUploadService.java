@@ -20,6 +20,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.file.exception.FileUploadException;
 import com.example.file.model.file_upload.FileUploadResponse;
@@ -134,7 +135,10 @@ public class FileUploadService{
     public FileUploadResponse uploadFileToCloud(MultipartFile file) throws IOException {
         String fileName = "PiaarMS_" + UUID.randomUUID().toString().replaceAll("-", "") + file.getOriginalFilename();
 
-        s3Client.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), null)
+        ObjectMetadata objMeta = new ObjectMetadata();
+        objMeta.setContentLength(file.getSize());
+
+        s3Client.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), objMeta)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
                                                       
         return new FileUploadResponse(fileName, s3Client.getUrl(bucket, fileName).toString(), file.getContentType(), file.getSize());
