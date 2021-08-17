@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.example.file.model.excel_upload.NaverOrderGetDto;
 import com.example.file.model.message.Message;
+import com.example.file.service.naver_order.NaverOrderExcelUploadService;
 import com.example.file.service.naver_order.OrderExcelUploadService;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -36,12 +37,11 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/api/v1/order-excel")
-@Slf4j
-public class OrderExcelUploadApiController {
-    
+@RequestMapping("/api/v1/naver-order")
+public class NaverOrderExcelUploadApiController {
+
     @Autowired
-    private OrderExcelUploadService orderExcelUploadService;
+    NaverOrderExcelUploadService naverOrderExcelUploadService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadExcelFile(@RequestParam("file") MultipartFile file) throws IOException {
@@ -49,7 +49,7 @@ public class OrderExcelUploadApiController {
 
         // file extension check.
         try{
-            orderExcelUploadService.isExcelFile(file);
+            naverOrderExcelUploadService.isExcelFile(file);
         } catch(Exception e){
             message.setStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             message.setMessage("file_extension_error");
@@ -58,7 +58,7 @@ public class OrderExcelUploadApiController {
         }
 
         try{
-            message.setData(orderExcelUploadService.uploadExcelFile(file));
+            message.setData(naverOrderExcelUploadService.uploadExcelFile(file));
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
