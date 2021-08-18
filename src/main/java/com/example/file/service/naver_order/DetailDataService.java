@@ -1,9 +1,10 @@
 package com.example.file.service.naver_order;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import com.example.file.model.naver_order.dto.DetailDataDto;
 import com.example.file.model.naver_order.entity.DetailDataEntity;
 import com.example.file.model.naver_order.repository.MemoryDetailDataRepository;
 
@@ -19,14 +20,22 @@ public class DetailDataService {
     @Autowired
     private MemoryDetailDataRepository memoryDetailDataRepository;
 
-    public void createOne(DetailDataDto dto) {
+    int cid = 0;
+
+    // public void createOne(DetailDataEntity entity) {
+
+    //     memoryDetailDataRepository.save(entity);
+
+    //     log.info("entity => {}", entity);
+    // }
+
+    public void createDetailData(String filePath, String fileName, Long fileSize) {
         DetailDataEntity entity = new DetailDataEntity();
-        
-        entity.setCid(1).setId(UUID.randomUUID()).setFilePath(dto.getFileUploadUri()).setFileName(dto.getFileName())
-                .setFileSize(dto.getSize()).setCreatedAt("2021-08-18").setCreatedBy("ce").setDeleted(0);
+        Date date = Calendar.getInstance().getTime();
+
+        entity.setCid(cid++).setId(UUID.randomUUID()).setFilePath(filePath).setFileName(fileName)
+                .setFileSize(fileSize).setCreatedAt(date).setCreatedBy(UUID.randomUUID()).setDeleted(0);
 
         memoryDetailDataRepository.save(entity);
-
-        log.info("entity => {}", entity);
     }
 }

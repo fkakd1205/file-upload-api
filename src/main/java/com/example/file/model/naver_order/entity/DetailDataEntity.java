@@ -1,5 +1,6 @@
 package com.example.file.model.naver_order.entity;
 
+import java.util.Date;
 import java.util.UUID;
 
 import lombok.Data;
@@ -13,7 +14,7 @@ public class DetailDataEntity {
     private String filePath;
     private String fileName;
     private Long fileSize;
-    private String createdAt;
-    private String createdBy;   // UUID로 변경해야 함
+    private Date createdAt;
+    private UUID createdBy;   // UUID로 변경해야 함
     private Integer deleted;
 }

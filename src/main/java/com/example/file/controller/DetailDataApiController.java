@@ -1,7 +1,6 @@
 package com.example.file.controller;
 
 import com.example.file.model.message.Message;
-import com.example.file.model.naver_order.dto.DetailDataDto;
 import com.example.file.model.naver_order.entity.DetailDataEntity;
 import com.example.file.service.naver_order.DetailDataService;
 
@@ -42,24 +41,24 @@ public class DetailDataApiController {
     //     return new ResponseEntity<>(message, message.getStatus());
     // }
 
-    @PostMapping("/one")
-    public ResponseEntity<?> createOne(@RequestBody DetailDataDto detailDataDto) {
-        Message message = new Message();
+    // @PostMapping("/one")
+    // public ResponseEntity<?> createOne(@RequestBody DetailDataEntity detailDataDto) {
+    //     Message message = new Message();
 
-        // // 유저 권한을 체크한다.
-        // if (detailDataService.isManager()) {
-            try{
-                detailDataService.createOne(detailDataDto);
-                message.setStatus(HttpStatus.OK);
-                message.setMessage("success");
-            } catch(Exception e) {
-                message.setStatus(HttpStatus.BAD_REQUEST);
-                message.setMessage("error");
-            }
-        // } else {
-        //     userService.userDenyCheck(message);
-        // }
+    //     // // 유저 권한을 체크한다.
+    //     // if (detailDataService.isManager()) {
+    //         try{
+    //             detailDataService.createOne(detailDataDto);
+    //             message.setStatus(HttpStatus.OK);
+    //             message.setMessage("success");
+    //         } catch(Exception e) {
+    //             message.setStatus(HttpStatus.BAD_REQUEST);
+    //             message.setMessage("error");
+    //         }
+    //     // } else {
+    //     //     userService.userDenyCheck(message);
+    //     // }
 
-        return new ResponseEntity<>(message, message.getStatus());
-    }
+    //     return new ResponseEntity<>(message, message.getStatus());
+    // }
 }

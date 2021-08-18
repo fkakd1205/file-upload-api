@@ -30,6 +30,7 @@ public class MemoryDetailDataRepository {
         memoryDetailData.put(seq, entity);
         seq++;
 
+        log.info("DetailDataRepository entity => {}", entity);
         return entity;
     }
 

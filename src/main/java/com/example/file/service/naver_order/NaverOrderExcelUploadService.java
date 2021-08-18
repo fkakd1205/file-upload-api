@@ -30,6 +30,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,6 +57,9 @@ public class NaverOrderExcelUploadService {
 
     @Value("${cloud.aws.s3.bucket}")
     public String bucket;
+
+    @Autowired
+    private DetailDataService detailDataService;
 
     // Excel file extension.
     private final List<String> EXTENSIONS_EXCEL = Arrays.asList("xlsx", "xls");
@@ -226,6 +230,8 @@ public class NaverOrderExcelUploadService {
 
         s3Client.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), objMeta)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
+
+        detailDataService.createDetailData(s3Client.getUrl(bucket, fileName).toString(), fileName, file.getSize());
                                                       
         return new FileUploadResponse(fileName, s3Client.getUrl(bucket, fileName).toString(), file.getContentType(), file.getSize());
     }
