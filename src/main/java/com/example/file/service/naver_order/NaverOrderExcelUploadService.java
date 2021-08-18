@@ -1,27 +1,61 @@
 package com.example.file.service.naver_order;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.file.model.excel_upload.NaverOrderAssembledDto;
 import com.example.file.model.excel_upload.NaverOrderProdDetailInfo;
 import com.example.file.model.excel_upload.NaverOrderReadDto;
+import com.example.file.payload.FileUploadResponse;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class NaverOrderExcelUploadService {
+
+    private AmazonS3 s3Client;
+
+    @Value("${cloud.aws.credentials.access-key}")
+    private String accessKey;
+
+    @Value("${cloud.aws.credentials.secret-key}")
+    private String secretKey;
+
+    @Value("${cloud.aws.region.static}")
+    private String region;
+
+    @Value("${file.upload-dir}")
+    String fileLocation;
+
+    @Value("${cloud.aws.s3.bucket}")
+    public String bucket;
 
     // Excel file extension.
     private final List<String> EXTENSIONS_EXCEL = Arrays.asList("xlsx", "xls");
@@ -162,5 +196,47 @@ public class NaverOrderExcelUploadService {
             return;
         }
         throw new IOException("엑셀파일만 업로드 해주세요.");
+    }
+
+    public void isExcelFile(List<MultipartFile> files) throws IOException{
+        for(MultipartFile file : files){
+            isExcelFile(file);
+        }
+    }
+
+    /**
+     * AWS S3 setting.
+     */
+    @PostConstruct
+    public void setS3Client() {
+        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
+
+        s3Client = AmazonS3ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(this.region)
+                .build();
+    }
+
+    public FileUploadResponse uploadFileToCloud(MultipartFile file) throws IOException {
+        String fileName = file.getOriginalFilename();
+        bucket += "/naver-order";
+
+        ObjectMetadata objMeta = new ObjectMetadata();
+        objMeta.setContentLength(file.getSize());
+
+        s3Client.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), objMeta)
+                .withCannedAcl(CannedAccessControlList.PublicRead));
+                                                      
+        return new FileUploadResponse(fileName, s3Client.getUrl(bucket, fileName).toString(), file.getContentType(), file.getSize());
+    }
+
+    public List<FileUploadResponse> uploadFilesToCloud(List<MultipartFile> files) throws IOException {
+        List<FileUploadResponse> uploadFiles = new ArrayList<>();
+
+        for(MultipartFile file : files){
+            uploadFiles.add(uploadFileToCloud(file));
+        }
+
+        return uploadFiles;
     }
 }

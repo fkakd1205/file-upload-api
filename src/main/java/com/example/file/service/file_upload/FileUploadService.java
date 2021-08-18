@@ -32,7 +32,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class FileUploadService{
     private AmazonS3 s3Client;
 
@@ -134,6 +137,7 @@ public class FileUploadService{
      */
     public FileUploadResponse uploadFileToCloud(MultipartFile file) throws IOException {
         String fileName = "PiaarMS_" + UUID.randomUUID().toString().replaceAll("-", "") + file.getOriginalFilename();
+        bucket += "/uploads";
 
         ObjectMetadata objMeta = new ObjectMetadata();
         objMeta.setContentLength(file.getSize());

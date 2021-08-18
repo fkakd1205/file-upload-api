@@ -156,4 +156,30 @@ public class NaverOrderExcelUploadApiController {
             e.printStackTrace();
         }
     }
+
+    @PostMapping("/uploadExcelsToCloud")
+    public ResponseEntity<?> uploadExcelFilesToCloud(@RequestParam("files") List<MultipartFile> files) {
+        Message message = new Message();
+
+        // file extension check.
+        try{
+            naverOrderExcelUploadService.isExcelFile(files);
+        } catch(Exception e){
+            message.setStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+            message.setMessage("file_extension_error");
+            message.setMemo("This is not an image file.");
+            return new ResponseEntity<>(message, message.getStatus());
+        }
+
+        try{
+            message.setData(naverOrderExcelUploadService.uploadFilesToCloud(files));
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
 }
