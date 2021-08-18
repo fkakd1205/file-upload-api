@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class NaverOrderAssembledDto{
+    private String prodOrderNumber;     // 상품주문번호 - 상품주문번호(0)
     private String orderNumber;     // X - 주문번호(1)
     private String receiver;    // 받는사람 - 수취인명(10)
     private String receiverContact1;    // 전화번호1 - 수취인연락처1(40)
@@ -18,5 +19,5 @@ public class NaverOrderAssembledDto{
     private List<NaverOrderProdDetailInfo> prodDetailInfos;    // 상품상세1, 내품수량1
     private String deliveryMessage;    // 배송메시지 - 배송메세지(45)
     private String unitA;    // 수량(A타입) - X
-    private String prodOrderNumber;     // 상품주문번호 - 상품주문번호(0)
+    private String prodOrderNumbers;     // 상품주문번호 - 상품주문번호(0)
 }

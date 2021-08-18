@@ -116,7 +116,7 @@ public class OrderExcelUploadService {
             int prevOrderIdx = resultOrderList.size()-1;
 
             // 받는사람 + 주소 + 상품명1 : 상품상세1(옵션) 추가
-            if(!orderSet.add(resultStr) && (resultOrderList.get(prevOrderIdx).getUnit1() == 1)){
+            if(!orderSet.add(resultStr) && (resultOrderList.get(prevOrderIdx).getUnit1() == newOrderList.get(i).getUnit1())){
                 resultOrderList.get(prevOrderIdx).setProdDetail1(resultOrderList.get(prevOrderIdx).getProdDetail1() + newOrderList.get(i).getProdDetail1());
             }else{
                 resultOrderList.add(newOrderList.get(i));

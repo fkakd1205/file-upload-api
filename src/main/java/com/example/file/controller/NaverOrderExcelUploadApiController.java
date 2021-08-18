@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.example.file.model.excel_upload.NaverOrderAssembledDto;
 import com.example.file.model.excel_upload.NaverOrderGetDto;
 import com.example.file.model.message.Message;
 import com.example.file.service.naver_order.NaverOrderExcelUploadService;
@@ -21,11 +22,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,8 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/v1/naver-order")
@@ -70,7 +65,7 @@ public class NaverOrderExcelUploadApiController {
     }
 
     @PostMapping("/download")
-    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<NaverOrderGetDto> dto) {
+    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<NaverOrderAssembledDto> dto) {
         Workbook workbook = new XSSFWorkbook();     // .xlsx
         Sheet sheet = workbook.createSheet("발주서");
         Row row = null;
@@ -79,69 +74,80 @@ public class NaverOrderExcelUploadApiController {
 
         row = sheet.createRow(rowNum++);
         cell = row.createCell(0);
-        cell.setCellValue("받는사람");
+        cell.setCellValue("주문번호");
         cell = row.createCell(1);
-        cell.setCellValue("전화번호1");
+        cell.setCellValue("상품주문번호");
         cell = row.createCell(2);
-        cell.setCellValue("우편번호");
+        cell.setCellValue("받는사람");
         cell = row.createCell(3);
-        cell.setCellValue("주소");
+        cell.setCellValue("전화번호1");
         cell = row.createCell(4);
-        cell.setCellValue("운송장번호");
+        cell.setCellValue("우편번호");
         cell = row.createCell(5);
-        cell.setCellValue("상품명1");
+        cell.setCellValue("주소");
         cell = row.createCell(6);
-        cell.setCellValue("보내는사람(지정)");
+        cell.setCellValue("운송장번호");
         cell = row.createCell(7);
-        cell.setCellValue("전화번호1(지정)");
+        cell.setCellValue("상품명1");
         cell = row.createCell(8);
-        cell.setCellValue("상품상세1");
+        cell.setCellValue("보내는사람(지정)");
         cell = row.createCell(9);
-        cell.setCellValue("내품수량1");
+        cell.setCellValue("전화번호1(지정)");
         cell = row.createCell(10);
-        cell.setCellValue("배송메시지");
+        cell.setCellValue("상품상세1");
         cell = row.createCell(11);
+        cell.setCellValue("옵션관리코드");
+        cell = row.createCell(12);
+        cell.setCellValue("내품수량1");
+        cell = row.createCell(13);
+        cell.setCellValue("배송메시지");
+        cell = row.createCell(14);
         cell.setCellValue("수량(A타입)");
+        cell = row.createCell(15);
+        cell.setCellValue("총 상품주문번호");
 
         for (int i=0; i<dto.size(); i++) {
             row = sheet.createRow(rowNum++);
             cell = row.createCell(0);
-            cell.setCellValue(dto.get(i).getReceiver());
+            cell.setCellValue(dto.get(i).getOrderNumber());
             cell = row.createCell(1);
-            cell.setCellValue(dto.get(i).getReceiverContact1());
+            cell.setCellValue(dto.get(i).getProdOrderNumber());
             cell = row.createCell(2);
-            cell.setCellValue(dto.get(i).getZipCode());
+            cell.setCellValue(dto.get(i).getReceiver());
             cell = row.createCell(3);
-            cell.setCellValue(dto.get(i).getDestination());
+            cell.setCellValue(dto.get(i).getReceiverContact1());
             cell = row.createCell(4);
-            cell.setCellValue(dto.get(i).getTranportNumber());
+            cell.setCellValue(dto.get(i).getZipCode());
             cell = row.createCell(5);
-            cell.setCellValue(dto.get(i).getProdName1());
+            cell.setCellValue(dto.get(i).getDestination());
             cell = row.createCell(6);
-            cell.setCellValue(dto.get(i).getSender());
+            cell.setCellValue(dto.get(i).getTranportNumber());
             cell = row.createCell(7);
-            cell.setCellValue(dto.get(i).getSenderContact1());
+            cell.setCellValue(dto.get(i).getProdName1());
             cell = row.createCell(8);
-            cell.setCellValue(dto.get(i).getProdDetail1());
+            cell.setCellValue(dto.get(i).getSender());
             cell = row.createCell(9);
-            cell.setCellValue(dto.get(i).getUnit1());
+            cell.setCellValue(dto.get(i).getSenderContact1());
             cell = row.createCell(10);
-            cell.setCellValue(dto.get(i).getDeliveryMessage());
+            cell.setCellValue(dto.get(i).getProdDetailInfos().get(0).getProdDetail1());     // 리스트로 가져와야 함
             cell = row.createCell(11);
+            cell.setCellValue(dto.get(i).getProdDetailInfos().get(0).getUnit1());       // 리스트로 가져와야 함
+            cell = row.createCell(12);
+            cell.setCellValue(dto.get(i).getProdDetailInfos().get(0).getOptionManageCode());        // 리스트로 가져와야 함
+            cell = row.createCell(13);
+            cell.setCellValue(dto.get(i).getDeliveryMessage());
+            cell = row.createCell(14);
             cell.setCellValue(dto.get(i).getUnitA());
+            cell = row.createCell(15);
+            cell.setCellValue(dto.get(i).getProdOrderNumbers());
         }
 
         for(int i = 0; i < 12; i++){
             sheet.autoSizeColumn(i);
         }
 
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat date = new SimpleDateFormat("[yy.MM.dd]");
-
-        String newFileName = date.format(calendar.getTime()).toString() + "Order.xlsx";
-
         response.setContentType("ms-vnd/excel");
-        response.setHeader("Content-Disposition", "attachment;filename=\"" + newFileName + "\"");   // 파일명 변경 안됨
+        response.setHeader("Content-Disposition", "attachment;filename=example.xlsx");   // 파일명 변경 안됨
 
         try{
             workbook.write(response.getOutputStream());

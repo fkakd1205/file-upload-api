@@ -141,7 +141,7 @@ public class OrderExcelUploadApiController {
         String newFileName = date.format(calendar.getTime()).toString() + "Order.xlsx";
 
         response.setContentType("ms-vnd/excel");
-        response.setHeader("Content-Disposition", "attachment;filename=\"" + newFileName + "\"");   // 파일명 변경 안됨
+        response.setHeader("Content-Disposition", "attachment;filename=\"" + newFileName + "\"");   // 파일명은 클라이언트에서 설정해야 함.
 
         try{
             workbook.write(response.getOutputStream());
