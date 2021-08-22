@@ -7,6 +7,12 @@ import java.util.Map;
 
 import com.example.file.model.naver_order.entity.ExcelDataEntity;
 
+import org.springframework.stereotype.Repository;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Repository
+@Slf4j
 public class MemoryExcelDataRepository {
     private Map<Integer, ExcelDataEntity> memoryExcelData = new HashMap<>();
     private Integer seq = 0;
@@ -24,6 +30,7 @@ public class MemoryExcelDataRepository {
         memoryExcelData.put(seq, entity);
         seq++;
         
+        log.info("ExcelDataRepository entity => {}", entity);
         return entity;
     }
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.file.model.excel_upload.NaverOrderAssembledDto;
 import com.example.file.model.excel_upload.NaverOrderProdDetailInfo;
 import com.example.file.model.excel_upload.NaverOrderReadDto;
+import com.example.file.model.naver_order.entity.ExcelDataEntity;
 import com.example.file.payload.FileUploadResponse;
 
 import org.apache.commons.io.FilenameUtils;
@@ -37,8 +39,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
+@Slf4j
 public class NaverOrderExcelUploadService {
 
     private AmazonS3 s3Client;
@@ -61,6 +63,9 @@ public class NaverOrderExcelUploadService {
     @Autowired
     private DetailDataService detailDataService;
 
+    @Autowired
+    private ExcelDataService excelDataSerivce;
+
     // Excel file extension.
     private final List<String> EXTENSIONS_EXCEL = Arrays.asList("xlsx", "xls");
     
@@ -75,7 +80,11 @@ public class NaverOrderExcelUploadService {
 
         Sheet sheet = workbook.getSheetAt(0);
         List<NaverOrderReadDto> dtos = getExcelForm(sheet);
-        
+        List<ExcelDataEntity> entity = getExcelData(sheet);
+
+        // ExcelDataEntity 생성
+        excelDataSerivce.createExcelData(entity);
+
         // 주문번호 > 받는사람 > 상품명1 > 상품상세1 오름차순 정렬
         dtos.sort(Comparator.comparing(NaverOrderReadDto::getOrderNumber)
                     .thenComparing(NaverOrderReadDto::getReceiver)
@@ -193,6 +202,47 @@ public class NaverOrderExcelUploadService {
         return dataList;
     }
 
+    private List<ExcelDataEntity> getExcelData(Sheet worksheet) {
+        List<ExcelDataEntity> dataList = new ArrayList<>();
+
+        for(int i = 2; i < worksheet.getPhysicalNumberOfRows(); i++) {
+            Row row = worksheet.getRow(i);
+
+            ExcelDataEntity data = new ExcelDataEntity();
+
+            data.setProdOrderNumber(row.getCell(0).getStringCellValue())
+                .setOrderNumber(row.getCell(1).getStringCellValue())
+                .setSalesChannel(row.getCell(7).getStringCellValue())
+                .setBuyer(row.getCell(8).getStringCellValue())
+                .setBuyerId(row.getCell(9).getStringCellValue())
+                .setReceiver(row.getCell(10).getStringCellValue())
+                .setPaymentDate(row.getCell(14).getDateCellValue())
+                .setProdNumber(row.getCell(15).getStringCellValue())
+                .setProdName(row.getCell(16).getStringCellValue())
+                .setOptionInfo(row.getCell(18).getStringCellValue())
+                .setOptionManageCode(row.getCell(19) != null ? row.getCell(19).getStringCellValue() : "")
+                .setUnit((int) row.getCell(20).getNumericCellValue())
+                .setOrderConfirmationDate(row.getCell(27).getDateCellValue())
+                .setShipmentDueDate(row.getCell(28).getDateCellValue())
+                .setShipmentCostBundleNumber(row.getCell(32).getStringCellValue())
+                .setSellerProdCode(row.getCell(37) != null ? row.getCell(37).getStringCellValue() : "")
+                .setSellerInnerCode1(row.getCell(38) != null ? row.getCell(38).getStringCellValue() : "")
+                .setSellerInnerCode2(row.getCell(39) != null ? row.getCell(39).getStringCellValue() : "")
+                .setReceiverContact1(row.getCell(40).getStringCellValue())
+                .setReceiverContact2(row.getCell(41) != null ? row.getCell(41).getStringCellValue() : "")
+                .setDestination(row.getCell(42).getStringCellValue())
+                .setBuyerContact(row.getCell(43).getStringCellValue())
+                .setZipCode(row.getCell(44).getStringCellValue())
+                .setDeliveryMessage(row.getCell(45) != null ? row.getCell(45).getStringCellValue() : "")
+                .setReleaseArea(row.getCell(46).getStringCellValue())
+                .setOrderDateTime(row.getCell(56).getDateCellValue());
+
+            dataList.add(data);
+        }
+
+        return dataList;
+    }
+
     public void isExcelFile(MultipartFile file) throws IOException{
         String extension = FilenameUtils.getExtension(file.getOriginalFilename().toLowerCase());
 
@@ -231,6 +281,7 @@ public class NaverOrderExcelUploadService {
         s3Client.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), objMeta)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
 
+        // DetailDataEntity 생성
         detailDataService.createDetailData(s3Client.getUrl(bucket, fileName).toString(), fileName, file.getSize());
                                                       
         return new FileUploadResponse(fileName, s3Client.getUrl(bucket, fileName).toString(), file.getContentType(), file.getSize());
