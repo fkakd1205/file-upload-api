@@ -8,6 +8,7 @@ import com.example.file.service.delivery_ready.DeliveryReadyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,7 +22,6 @@ public class DeliveryReadyApiController {
     @Autowired
     private DeliveryReadyService deliveryReadyService;
 
-    // 엑셀 파일 AWS S3업로드 후 DeliveryReadyFileEntity, DeliveryReadyItemEntity 생성
     @PostMapping("/upload")
     public ResponseEntity<?> uploadDeliveryReadyExcelFile(@RequestParam("file") MultipartFile file) throws IOException {
         Message message = new Message();
@@ -38,6 +38,55 @@ public class DeliveryReadyApiController {
 
         try{
             message.setData(deliveryReadyService.uploadDeliveryReadyExcelFile(file));
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    // 엑셀 파일 AWS S3업로드 후 DeliveryReadyFileEntity, DeliveryReadyItemEntity 생성
+    @PostMapping("/store")
+    public ResponseEntity<?> storeDeliveryReadyExcelFile(@RequestParam("file") MultipartFile file) throws IOException {
+        Message message = new Message();
+
+        try{
+            message.setData(deliveryReadyService.storeDeliveryReadyExcelFile(file));
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    @GetMapping("/view/unreleased")
+    public ResponseEntity<?> getDeliveryReadyViewUnreleasedData() {
+        Message message = new Message();
+
+        try{
+            message.setData(deliveryReadyService.getDeliveryReadyViewUnreleasedData());
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    @GetMapping("/view/released")
+    public ResponseEntity<?> getDeliveryReadyViewReleasedData() {
+        Message message = new Message();
+
+        try{
+            message.setData(deliveryReadyService.getDeliveryReadyViewReleasedData());
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {

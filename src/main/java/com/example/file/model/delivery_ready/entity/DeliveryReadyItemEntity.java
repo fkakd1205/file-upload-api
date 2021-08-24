@@ -60,8 +60,8 @@ public class DeliveryReadyItemEntity {
     @Column(name = "option_info")
     private String optionInfo;        // 옵션정보(18)
 
-    @Column(name = "option_manage_code")
-    private String optionManageCode;        // 옵션관리코드(19) / null 체크
+    @Column(name = "option_management_code")
+    private String optionManagementCode;        // 옵션관리코드(19) / null 체크
 
     @Column(name = "unit")
     private Integer unit;        // 수량(20)
@@ -110,6 +110,12 @@ public class DeliveryReadyItemEntity {
 
     @Column(name = "released")
     private Boolean released;   // 출고여부
+
+    @Column(name = "released_at")
+    private Date releasedAt;
+
+    @Column(name = "created_at")
+    private Date createdAt;
 
     @Column(name = "delivery_ready_file_cid")
     private Integer deliveryReadyFileCid;

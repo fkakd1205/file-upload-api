@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -18,6 +19,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyFileEntity;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.delivery_ready.repository.DeliveryReadyFileRepository;
@@ -66,9 +68,30 @@ public class DeliveryReadyService {
     // Excel file extension.
     private final List<String> EXTENSIONS_EXCEL = Arrays.asList("xlsx", "xls");
 
-    /**
-     * AWS S3 setting.
-     */
+    public void isExcelFile(MultipartFile file) throws IOException{
+        String extension = FilenameUtils.getExtension(file.getOriginalFilename().toLowerCase());
+
+        if(EXTENSIONS_EXCEL.contains(extension)){
+            return;
+        }
+        throw new IOException("엑셀파일만 업로드 해주세요.");
+    }
+
+    public List<DeliveryReadyItemEntity> uploadDeliveryReadyExcelFile(MultipartFile file) throws IOException {
+        Workbook workbook = null;
+        try{
+            workbook = WorkbookFactory.create(file.getInputStream());
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        Sheet sheet = workbook.getSheetAt(0);
+        List<DeliveryReadyItemEntity> dtos = getDeliveryReadyExcelForm(sheet);
+
+        return dtos;
+    }
+
+    // AWS S3 setting.
     @PostConstruct
     public void setS3Client() {
         AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
@@ -79,7 +102,7 @@ public class DeliveryReadyService {
                 .build();
     }
 
-    public FileUploadResponse uploadDeliveryReadyExcelFile(MultipartFile file) throws IOException {
+    public FileUploadResponse storeDeliveryReadyExcelFile(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename();
         bucket += "/naver-order";
 
@@ -91,18 +114,11 @@ public class DeliveryReadyService {
 
         // DeliveryReadyFileEntity 생성
         DeliveryReadyFileEntity fileEntity = createDeliveryReadyFileEntity(s3Client.getUrl(bucket, fileName).toString(), fileName, (int)file.getSize());
+
+        // DeliveryReadyItemEntity 생성
         createDeliveryReadyItemData(file, fileEntity);
                                                       
         return new FileUploadResponse(fileName, s3Client.getUrl(bucket, fileName).toString(), file.getContentType(), file.getSize());
-    }
-
-    public void isExcelFile(MultipartFile file) throws IOException{
-        String extension = FilenameUtils.getExtension(file.getOriginalFilename().toLowerCase());
-
-        if(EXTENSIONS_EXCEL.contains(extension)){
-            return;
-        }
-        throw new IOException("엑셀파일만 업로드 해주세요.");
     }
 
     public DeliveryReadyFileEntity createDeliveryReadyFileEntity(String filePath, String fileName, Integer fileSize) {
@@ -132,6 +148,8 @@ public class DeliveryReadyService {
     private void getDeliveryReadyExcelData(Sheet worksheet, DeliveryReadyFileEntity fileEntity) {
         List<DeliveryReadyItemEntity> dataList = new ArrayList<>();
 
+        Set<String> storedProdOrderNumber = deliveryReadyItemRepository.findAllProdOrderNumber();   // 상품 주문번호 가져오기
+
         for(int i = 2; i < worksheet.getPhysicalNumberOfRows(); i++) {
             Row row = worksheet.getRow(i);
 
@@ -148,7 +166,7 @@ public class DeliveryReadyService {
                 .setProdNumber(row.getCell(15).getStringCellValue())
                 .setProdName(row.getCell(16).getStringCellValue())
                 .setOptionInfo(row.getCell(18).getStringCellValue())
-                .setOptionManageCode(row.getCell(19) != null ? row.getCell(19).getStringCellValue() : "")
+                .setOptionManagementCode(row.getCell(19) != null ? row.getCell(19).getStringCellValue() : "")
                 .setUnit((int) row.getCell(20).getNumericCellValue())
                 .setOrderConfirmationDate(row.getCell(27).getDateCellValue())
                 .setShipmentDueDate(row.getCell(28).getDateCellValue())
@@ -165,11 +183,69 @@ public class DeliveryReadyService {
                 .setReleaseArea(row.getCell(46).getStringCellValue())
                 .setOrderDateTime(row.getCell(56).getDateCellValue())
                 .setReleased(false)
+                .setCreatedAt(fileEntity.getCreatedAt())
                 .setDeliveryReadyFileCid(fileEntity.getCid());
+
+            // 상품주문번호가 중복되지 않는다면
+            if(storedProdOrderNumber.add(data.getProdOrderNumber())){
+                dataList.add(data);
+            }
+        }
+
+        deliveryReadyItemRepository.saveAll(dataList);
+    }
+
+    private List<DeliveryReadyItemEntity> getDeliveryReadyExcelForm(Sheet worksheet) {
+        List<DeliveryReadyItemEntity> dataList = new ArrayList<>();
+
+        for(int i = 2; i < worksheet.getPhysicalNumberOfRows(); i++) {
+            Row row = worksheet.getRow(i);
+
+            DeliveryReadyItemEntity data = new DeliveryReadyItemEntity();
+
+            data.setId(UUID.randomUUID())
+                .setProdOrderNumber(row.getCell(0).getStringCellValue())
+                .setOrderNumber(row.getCell(1).getStringCellValue())
+                .setSalesChannel(row.getCell(7).getStringCellValue())
+                .setBuyer(row.getCell(8).getStringCellValue())
+                .setBuyerId(row.getCell(9).getStringCellValue())
+                .setReceiver(row.getCell(10).getStringCellValue())
+                .setPaymentDate(row.getCell(14).getDateCellValue())
+                .setProdNumber(row.getCell(15).getStringCellValue())
+                .setProdName(row.getCell(16).getStringCellValue())
+                .setOptionInfo(row.getCell(18).getStringCellValue())
+                .setOptionManagementCode(row.getCell(19) != null ? row.getCell(19).getStringCellValue() : "")
+                .setUnit((int) row.getCell(20).getNumericCellValue())
+                .setOrderConfirmationDate(row.getCell(27).getDateCellValue())
+                .setShipmentDueDate(row.getCell(28).getDateCellValue())
+                .setShipmentCostBundleNumber(row.getCell(32).getStringCellValue())
+                .setSellerProdCode(row.getCell(37) != null ? row.getCell(37).getStringCellValue() : "")
+                .setSellerInnerCode1(row.getCell(38) != null ? row.getCell(38).getStringCellValue() : "")
+                .setSellerInnerCode2(row.getCell(39) != null ? row.getCell(39).getStringCellValue() : "")
+                .setReceiverContact1(row.getCell(40).getStringCellValue())
+                .setReceiverContact2(row.getCell(41) != null ? row.getCell(41).getStringCellValue() : "")
+                .setDestination(row.getCell(42).getStringCellValue())
+                .setBuyerContact(row.getCell(43).getStringCellValue())
+                .setZipCode(row.getCell(44).getStringCellValue())
+                .setDeliveryMessage(row.getCell(45) != null ? row.getCell(45).getStringCellValue() : "")
+                .setReleaseArea(row.getCell(46).getStringCellValue())
+                .setOrderDateTime(row.getCell(56).getDateCellValue());
 
             dataList.add(data);
         }
 
-        deliveryReadyItemRepository.saveAll(dataList);
+        return dataList;
+    }
+
+    public List<DeliveryReadyItemViewDto> getDeliveryReadyViewUnreleasedData() {
+        // return deliveryReadyItemRepository.findByReleased(false);
+        List<DeliveryReadyItemViewDto> dtos = deliveryReadyItemRepository.findAllReleased(false);
+        
+        log.info("dto => {}", dtos.get(0).getDeliveryReadyItem());
+        return dtos;
+    }
+
+    public List<DeliveryReadyItemViewDto> getDeliveryReadyViewReleasedData() {
+        return deliveryReadyItemRepository.findAllReleased(true);
     }
 }
