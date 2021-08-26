@@ -5,8 +5,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.example.file.model.excel_upload.NaverOrderAssembledDto;
 import com.example.file.model.message.Message;
+import com.example.file.model.naver_order.dto.NaverOrderAssembledDto;
 import com.example.file.service.naver_order.NaverOrderExcelUploadService;
 
 import org.apache.poi.ss.usermodel.Cell;

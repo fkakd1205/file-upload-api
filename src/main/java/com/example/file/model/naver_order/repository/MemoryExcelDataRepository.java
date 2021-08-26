@@ -30,7 +30,6 @@ public class MemoryExcelDataRepository {
         memoryExcelData.put(seq, entity);
         seq++;
         
-        log.info("ExcelDataRepository entity => {}", entity);
         return entity;
     }
 

@@ -1,6 +1,7 @@
 package com.example.file.service.delivery_ready;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -19,9 +20,9 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyFileEntity;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
+import com.example.file.model.delivery_ready.proj.DeliveryReadyItemViewProj;
 import com.example.file.model.delivery_ready.repository.DeliveryReadyFileRepository;
 import com.example.file.model.delivery_ready.repository.DeliveryReadyItemRepository;
 import com.example.file.model.file_upload.FileUploadResponse;
@@ -237,15 +238,35 @@ public class DeliveryReadyService {
         return dataList;
     }
 
-    public List<DeliveryReadyItemViewDto> getDeliveryReadyViewUnreleasedData() {
-        // return deliveryReadyItemRepository.findByReleased(false);
-        List<DeliveryReadyItemViewDto> dtos = deliveryReadyItemRepository.findAllReleased(false);
-        
-        log.info("dto => {}", dtos.get(0).getDeliveryReadyItem());
-        return dtos;
+    public List<DeliveryReadyItemViewProj> getDeliveryReadyViewUnreleasedData() {
+        return deliveryReadyItemRepository.findAllReleased(false);
     }
 
-    public List<DeliveryReadyItemViewDto> getDeliveryReadyViewReleasedData() {
-        return deliveryReadyItemRepository.findAllReleased(true);
+    public List<DeliveryReadyItemViewProj> getDeliveryReadyViewReleasedData(String currentDate) {
+        List<DeliveryReadyItemViewProj> releasedItems = deliveryReadyItemRepository.findAllReleased(true);
+        List<DeliveryReadyItemViewProj> todayReleasedItem = new ArrayList<>();
+        int KR_TIME_DIFF = 9 * 60 * 60 * 1000;
+
+        for(DeliveryReadyItemViewProj releasedItem : releasedItems){
+            String releasedAt = releasedItem.getDeliveryReadyItem().getReleasedAt().toString();   // UTC 시간
+
+            if(releasedAt.contains(currentDate)){
+                todayReleasedItem.add(releasedItem);
+            }
+        }
+
+        return todayReleasedItem;
+    }
+
+    public void releasedDeliveryReadyItem(List<DeliveryReadyItemEntity> entities) {
+        Date date = Calendar.getInstance().getTime();
+
+        for(DeliveryReadyItemEntity entity : entities){
+            deliveryReadyItemRepository.findById(entity.getCid()).ifPresentOrElse(deliveryReadyItemEntity -> {
+                deliveryReadyItemEntity.setReleased(true).setReleasedAt(date);
+                deliveryReadyItemRepository.save(deliveryReadyItemEntity);
+            }, null);
+
+        }
     }
 }

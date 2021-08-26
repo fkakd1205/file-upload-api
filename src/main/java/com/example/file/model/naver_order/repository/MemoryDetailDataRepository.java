@@ -29,8 +29,7 @@ public class MemoryDetailDataRepository {
     public DetailDataEntity save(DetailDataEntity entity) {
         memoryDetailData.put(seq, entity);
         seq++;
-
-        log.info("DetailDataRepository entity => {}", entity);
+        
         return entity;
     }
 

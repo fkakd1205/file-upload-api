@@ -1,4 +1,4 @@
-package com.example.file.model.excel_upload;
+package com.example.file.model.naver_order.dto;
 
 import lombok.Data;
 

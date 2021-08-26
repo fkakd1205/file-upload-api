@@ -9,6 +9,6 @@ public class DeliveryReadyItemViewDto {
     private DeliveryReadyItemEntity deliveryReadyItem;
     private String optionDefaultName;
     private String optionManagementName;
-    private Integer optionStockUnit;
+    private String optionStockUnit;
     private String prodManagementName;
 }

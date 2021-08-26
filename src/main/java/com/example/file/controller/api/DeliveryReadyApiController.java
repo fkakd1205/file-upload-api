@@ -1,21 +1,38 @@
 package com.example.file.controller.api;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
+
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
+import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.message.Message;
 import com.example.file.service.delivery_ready.DeliveryReadyService;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 @RequestMapping("/api/v1/delivery-ready")
 public class DeliveryReadyApiController {
     
@@ -81,12 +98,12 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
-    @GetMapping("/view/released")
-    public ResponseEntity<?> getDeliveryReadyViewReleasedData() {
+    @GetMapping("/view/released/{currentDate}")
+    public ResponseEntity<?> getDeliveryReadyViewReleasedData(@PathVariable(value = "currentDate") String currentDate) {
         Message message = new Message();
 
         try{
-            message.setData(deliveryReadyService.getDeliveryReadyViewReleasedData());
+            message.setData(deliveryReadyService.getDeliveryReadyViewReleasedData(currentDate));
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
@@ -95,5 +112,115 @@ public class DeliveryReadyApiController {
         }
 
         return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    // @PostMapping("/view/download")
+    // public void changeOrderDtos(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> dtos) {
+    //     List<DeliveryReadyAssembledDto> newOrderList = new ArrayList<>();
+
+    //     Set
+    //     downloadExcelFile(response, changeDtos);
+    // }
+
+    @PostMapping("/view/download")
+    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> dtos) {
+        Workbook workbook = new XSSFWorkbook();     // .xlsx
+        Sheet sheet = workbook.createSheet("발주서 양식");
+        Row row = null;
+        Cell cell = null;
+        int rowNum = 0;
+
+        row = sheet.createRow(rowNum++);
+        cell = row.createCell(0);
+        cell.setCellValue("주문번호");
+        cell = row.createCell(1);
+        cell.setCellValue("상품주문번호");
+        cell = row.createCell(2);
+        cell.setCellValue("받는사람");
+        cell = row.createCell(3);
+        cell.setCellValue("전화번호1");
+        cell = row.createCell(4);
+        cell.setCellValue("우편번호");
+        cell = row.createCell(5);
+        cell.setCellValue("주소");
+        cell = row.createCell(6);
+        cell.setCellValue("운송장번호");
+        cell = row.createCell(7);
+        cell.setCellValue("상품명1");
+        cell = row.createCell(8);
+        cell.setCellValue("보내는사람(지정)");
+        cell = row.createCell(9);
+        cell.setCellValue("전화번호1(지정)");
+        cell = row.createCell(10);
+        cell.setCellValue("상품상세1");
+        cell = row.createCell(11);
+        cell.setCellValue("옵션관리코드");
+        cell = row.createCell(12);
+        cell.setCellValue("내품수량1");
+        cell = row.createCell(13);
+        cell.setCellValue("배송메시지");
+        cell = row.createCell(14);
+        cell.setCellValue("수량(A타입)");
+        cell = row.createCell(15);
+        cell.setCellValue("총 상품주문번호");
+
+        for (int i=0; i<dtos.size(); i++) {
+            row = sheet.createRow(rowNum++);
+            cell = row.createCell(0);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getOrderNumber());
+            cell = row.createCell(1);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getProdOrderNumber());
+            cell = row.createCell(2);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getReceiver());
+            cell = row.createCell(3);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getReceiverContact1());
+            cell = row.createCell(4);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getZipCode());
+            cell = row.createCell(5);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getDestination());
+            cell = row.createCell(6);
+            cell.setCellValue("");
+            cell = row.createCell(7);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getProdName());
+            cell = row.createCell(8);
+            cell.setCellValue("스토어명");
+            cell = row.createCell(9);
+            cell.setCellValue("070-0000-0000");
+            cell = row.createCell(10);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getOptionInfo());
+            cell = row.createCell(11);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getOptionManagementCode());
+            cell = row.createCell(12);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getUnit());
+            cell = row.createCell(13);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getDeliveryMessage());
+            cell = row.createCell(14);
+            cell.setCellValue("");
+            cell = row.createCell(15);
+            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getProdOrderNumber());
+        }
+
+        for(int i = 0; i < 16; i++){
+            sheet.autoSizeColumn(i);
+        }
+
+        response.setContentType("ms-vnd/excel");
+        response.setHeader("Content-Disposition", "attachment;filename=example.xlsx");
+
+        try{
+            workbook.write(response.getOutputStream());
+            workbook.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // released, released_at 설정
+        List<DeliveryReadyItemEntity> entities = new ArrayList<>();
+        
+        for(DeliveryReadyItemViewDto dto : dtos) {
+            entities.add(dto.getDeliveryReadyItem());
+        }
+
+        deliveryReadyService.releasedDeliveryReadyItem(entities);
     }
 }

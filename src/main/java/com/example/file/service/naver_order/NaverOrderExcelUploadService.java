@@ -21,9 +21,9 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.example.file.model.excel_upload.NaverOrderAssembledDto;
-import com.example.file.model.excel_upload.NaverOrderProdDetailInfo;
-import com.example.file.model.excel_upload.NaverOrderReadDto;
+import com.example.file.model.naver_order.dto.NaverOrderAssembledDto;
+import com.example.file.model.naver_order.dto.NaverOrderProdDetailInfo;
+import com.example.file.model.naver_order.dto.NaverOrderReadDto;
 import com.example.file.model.naver_order.entity.ExcelDataEntity;
 import com.example.file.payload.FileUploadResponse;
 
