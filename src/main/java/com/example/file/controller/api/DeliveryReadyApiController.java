@@ -2,11 +2,15 @@ package com.example.file.controller.api;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemExcelFormDto;
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.message.Message;
@@ -114,16 +118,13 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
-    // @PostMapping("/view/download")
-    // public void changeOrderDtos(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> dtos) {
-    //     List<DeliveryReadyAssembledDto> newOrderList = new ArrayList<>();
-
-    //     Set
-    //     downloadExcelFile(response, changeDtos);
-    // }
-
     @PostMapping("/view/download")
-    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> dtos) {
+    public void downloadExcelFile(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> viewDtos) {
+
+        // 중복데이터 처리
+        List<DeliveryReadyItemExcelFormDto> dtos = deliveryReadyService.changeDeliveryReadyItem(viewDtos);
+
+        // 엑셀 생성
         Workbook workbook = new XSSFWorkbook();     // .xlsx
         Sheet sheet = workbook.createSheet("발주서 양식");
         Row row = null;
@@ -167,37 +168,37 @@ public class DeliveryReadyApiController {
         for (int i=0; i<dtos.size(); i++) {
             row = sheet.createRow(rowNum++);
             cell = row.createCell(0);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getOrderNumber());
+            cell.setCellValue(dtos.get(i).getOrderNumber());
             cell = row.createCell(1);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getProdOrderNumber());
+            cell.setCellValue(dtos.get(i).getProdOrderNumber());
             cell = row.createCell(2);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getReceiver());
+            cell.setCellValue(dtos.get(i).getReceiver());
             cell = row.createCell(3);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getReceiverContact1());
+            cell.setCellValue(dtos.get(i).getReceiverContact1());
             cell = row.createCell(4);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getZipCode());
+            cell.setCellValue(dtos.get(i).getZipCode());
             cell = row.createCell(5);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getDestination());
+            cell.setCellValue(dtos.get(i).getDestination());
             cell = row.createCell(6);
-            cell.setCellValue("");
+            cell.setCellValue(dtos.get(i).getTransportNumber());
             cell = row.createCell(7);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getProdName());
+            cell.setCellValue(dtos.get(i).getProdName());
             cell = row.createCell(8);
-            cell.setCellValue("스토어명");
+            cell.setCellValue(dtos.get(i).getSender());
             cell = row.createCell(9);
-            cell.setCellValue("070-0000-0000");
+            cell.setCellValue(dtos.get(i).getSenderContact1());
             cell = row.createCell(10);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getOptionInfo());
+            cell.setCellValue(dtos.get(i).getOptionInfo());
             cell = row.createCell(11);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getOptionManagementCode());
+            cell.setCellValue(dtos.get(i).getOptionManagementCode());
             cell = row.createCell(12);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getUnit());
+            cell.setCellValue(dtos.get(i).getUnit());
             cell = row.createCell(13);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getDeliveryMessage());
+            cell.setCellValue(dtos.get(i).getDeliveryMessage());
             cell = row.createCell(14);
-            cell.setCellValue("");
+            cell.setCellValue(dtos.get(i).getUnitA());
             cell = row.createCell(15);
-            cell.setCellValue(dtos.get(i).getDeliveryReadyItem().getProdOrderNumber());
+            cell.setCellValue(dtos.get(i).getAllProdOrderNumber());
         }
 
         for(int i = 0; i < 16; i++){
@@ -215,12 +216,6 @@ public class DeliveryReadyApiController {
         }
 
         // released, released_at 설정
-        List<DeliveryReadyItemEntity> entities = new ArrayList<>();
-        
-        for(DeliveryReadyItemViewDto dto : dtos) {
-            entities.add(dto.getDeliveryReadyItem());
-        }
-
-        deliveryReadyService.releasedDeliveryReadyItem(entities);
+        deliveryReadyService.releasedDeliveryReadyItem(viewDtos);
     }
 }

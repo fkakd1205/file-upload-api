@@ -2,10 +2,17 @@ package com.example.file.service.delivery_ready;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -20,6 +27,8 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemExcelFormDto;
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyFileEntity;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.delivery_ready.proj.DeliveryReadyItemViewProj;
@@ -105,21 +114,21 @@ public class DeliveryReadyService {
 
     public FileUploadResponse storeDeliveryReadyExcelFile(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename();
-        bucket += "/naver-order";
+        String uploadPath = bucket + "/naver-order";
 
         ObjectMetadata objMeta = new ObjectMetadata();
         objMeta.setContentLength(file.getSize());
 
-        s3Client.putObject(new PutObjectRequest(bucket, fileName, file.getInputStream(), objMeta)
+        s3Client.putObject(new PutObjectRequest(uploadPath, fileName, file.getInputStream(), objMeta)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
 
         // DeliveryReadyFileEntity 생성
-        DeliveryReadyFileEntity fileEntity = createDeliveryReadyFileEntity(s3Client.getUrl(bucket, fileName).toString(), fileName, (int)file.getSize());
+        DeliveryReadyFileEntity fileEntity = createDeliveryReadyFileEntity(s3Client.getUrl(uploadPath, fileName).toString(), fileName, (int)file.getSize());
 
         // DeliveryReadyItemEntity 생성
         createDeliveryReadyItemData(file, fileEntity);
                                                       
-        return new FileUploadResponse(fileName, s3Client.getUrl(bucket, fileName).toString(), file.getContentType(), file.getSize());
+        return new FileUploadResponse(fileName, s3Client.getUrl(uploadPath, fileName).toString(), file.getContentType(), file.getSize());
     }
 
     public DeliveryReadyFileEntity createDeliveryReadyFileEntity(String filePath, String fileName, Integer fileSize) {
@@ -149,7 +158,7 @@ public class DeliveryReadyService {
     private void getDeliveryReadyExcelData(Sheet worksheet, DeliveryReadyFileEntity fileEntity) {
         List<DeliveryReadyItemEntity> dataList = new ArrayList<>();
 
-        Set<String> storedProdOrderNumber = deliveryReadyItemRepository.findAllProdOrderNumber();   // 상품 주문번호 가져오기
+        Set<String> storedProdOrderNumber = deliveryReadyItemRepository.findAllProdOrderNumber();   // 상품 주문번호로 중복데이터를 구분
 
         for(int i = 2; i < worksheet.getPhysicalNumberOfRows(); i++) {
             Row row = worksheet.getRow(i);
@@ -245,11 +254,14 @@ public class DeliveryReadyService {
     public List<DeliveryReadyItemViewProj> getDeliveryReadyViewReleasedData(String currentDate) {
         List<DeliveryReadyItemViewProj> releasedItems = deliveryReadyItemRepository.findAllReleased(true);
         List<DeliveryReadyItemViewProj> todayReleasedItem = new ArrayList<>();
-        int KR_TIME_DIFF = 9 * 60 * 60 * 1000;
 
         for(DeliveryReadyItemViewProj releasedItem : releasedItems){
-            String releasedAt = releasedItem.getDeliveryReadyItem().getReleasedAt().toString();   // UTC 시간
+            Date storedReleasedAt = releasedItem.getDeliveryReadyItem().getReleasedAt();
 
+            // UTC시간을 KST로 변경
+            String releasedAt = changeLocalDate(storedReleasedAt);
+
+            // 해당 날짜의 엑셀 데이터 추출
             if(releasedAt.contains(currentDate)){
                 todayReleasedItem.add(releasedItem);
             }
@@ -258,15 +270,89 @@ public class DeliveryReadyService {
         return todayReleasedItem;
     }
 
-    public void releasedDeliveryReadyItem(List<DeliveryReadyItemEntity> entities) {
+    public String changeLocalDate(Date storedReleasedAt) {
+        LocalDateTime currentDate = LocalDateTime.ofInstant(storedReleasedAt.toInstant(), ZoneId.systemDefault());
+
+        return currentDate.toString();
+    }
+
+    public void releasedDeliveryReadyItem(List<DeliveryReadyItemViewDto> dtos) {
         Date date = Calendar.getInstance().getTime();
 
-        for(DeliveryReadyItemEntity entity : entities){
-            deliveryReadyItemRepository.findById(entity.getCid()).ifPresentOrElse(deliveryReadyItemEntity -> {
+        for(DeliveryReadyItemViewDto dto : dtos){
+            deliveryReadyItemRepository.findById(dto.getDeliveryReadyItem().getCid()).ifPresentOrElse(deliveryReadyItemEntity -> {
                 deliveryReadyItemEntity.setReleased(true).setReleasedAt(date);
                 deliveryReadyItemRepository.save(deliveryReadyItemEntity);
             }, null);
 
         }
+    }
+
+    public List<DeliveryReadyItemExcelFormDto> getFromDtoByEntity(List<DeliveryReadyItemEntity> entities) {
+        List<DeliveryReadyItemExcelFormDto> formDtos = new ArrayList<>();
+
+        for(DeliveryReadyItemEntity entity : entities){
+            DeliveryReadyItemExcelFormDto formDto = new DeliveryReadyItemExcelFormDto();
+
+            formDto.setProdOrderNumber(entity.getProdOrderNumber()).setOrderNumber(entity.getOrderNumber())
+                    .setReceiver(entity.getReceiver()).setReceiverContact1(entity.getReceiverContact1())
+                    .setZipCode(entity.getZipCode()).setDestination(entity.getDestination())
+                    .setTransportNumber("").setProdName(entity.getProdName())
+                    .setSender("스토어명").setSenderContact1("070-0000-0000").setOptionInfo(entity.getOptionInfo())
+                    .setOptionManagementCode(entity.getOptionManagementCode()).setUnit(entity.getUnit())
+                    .setDeliveryMessage(entity.getDeliveryMessage()).setUnitA("").setAllProdOrderNumber(entity.getProdNumber());
+
+            formDtos.add(formDto);
+        }
+
+        return formDtos;
+    }
+
+    public List<DeliveryReadyItemExcelFormDto> changeDeliveryReadyItem(List<DeliveryReadyItemViewDto> dtos) {
+        List<DeliveryReadyItemEntity> entities = new ArrayList<>();
+
+        // DeliveryReadyItemViewDto에서 DeliveryReadyItemEntity만 뽑아낸다
+        for(DeliveryReadyItemViewDto viewDto : dtos) {
+            entities.add(viewDto.getDeliveryReadyItem());
+        }
+
+        // DeliveryReadyItemEntity로 DeliveryReadyItemExcelFromDto를 만든다
+        List<DeliveryReadyItemExcelFormDto> formDtos = getFromDtoByEntity(entities);
+
+        return changeDuplicationEntity(formDtos);
+    }
+
+    public List<DeliveryReadyItemExcelFormDto> changeDuplicationEntity(List<DeliveryReadyItemExcelFormDto> entities) {
+        List<DeliveryReadyItemExcelFormDto> newOrderList = new ArrayList<>();
+
+        entities.sort(Comparator.comparing(DeliveryReadyItemExcelFormDto::getOrderNumber)
+                                .thenComparing(DeliveryReadyItemExcelFormDto::getReceiver)
+                                .thenComparing(DeliveryReadyItemExcelFormDto::getProdName)
+                                .thenComparing(DeliveryReadyItemExcelFormDto::getOptionInfo));
+
+        Set<String> optionSet = new HashSet<>();        // 받는사람 + 주소 + 상품명 + 상품상세
+
+        for(int i = 0; i < entities.size(); i++){
+            StringBuilder sb = new StringBuilder();
+            sb.append(entities.get(i).getReceiver());
+            sb.append(entities.get(i).getDestination());
+            sb.append(entities.get(i).getProdName());
+            sb.append(entities.get(i).getOptionInfo());
+
+            String resultStr = sb.toString();
+            int prevOrderIdx = newOrderList.size()-1;   // 추가되는 데이터 리스트의 마지막 index
+
+            if(!optionSet.add(resultStr)){
+                DeliveryReadyItemExcelFormDto prevProd = newOrderList.get(prevOrderIdx);
+                DeliveryReadyItemExcelFormDto currentProd = entities.get(i);
+
+                newOrderList.get(prevOrderIdx).setUnit(prevProd.getUnit() + currentProd.getUnit());
+                newOrderList.get(prevOrderIdx).setAllProdOrderNumber(prevProd.getProdOrderNumber() + " / " + currentProd.getProdOrderNumber());     // 총 상품번호
+            }else{
+                newOrderList.add(entities.get(i));
+            }
+        }
+
+        return newOrderList;
     }
 }
