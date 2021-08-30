@@ -1,12 +1,10 @@
 package com.example.file.service.delivery_ready;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -18,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -270,22 +269,57 @@ public class DeliveryReadyService {
         return todayReleasedItem;
     }
 
+    public List<DeliveryReadyItemViewProj> getDeliveryReadyViewReleased(String date1, String date2) {
+        // String start = date1.substring(1, 11);
+        // String end = date2.substring(1, 11);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startDate = null;
+        Date endDate = null;
+
+        try{
+            startDate = dateFormat.parse(date1);
+            endDate = dateFormat.parse(date2);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // // local시간 맞추기
+        // Calendar c = Calendar.getInstance();
+        // c.setTime(startDate);
+        // c.add(Calendar.DATE, 1);
+
+        // startDate = c.getTime();
+
+        // c.setTime(endDate);
+        // c.add(Calendar.DATE, 2);
+        // endDate = c.getTime();
+
+        log.info("startDate => {}", startDate);
+        log.info("endDate => {}", endDate);
+
+        // -9시간 설정을 안해줘도 백엔드에서 Date값을 계산해서 가져온다
+        List<DeliveryReadyItemViewProj> releasedItems = deliveryReadyItemRepository.findSelectedReleased(true, startDate, endDate);
+        
+        return releasedItems;
+    }
+
     public String changeLocalDate(Date storedReleasedAt) {
         LocalDateTime currentDate = LocalDateTime.ofInstant(storedReleasedAt.toInstant(), ZoneId.systemDefault());
 
         return currentDate.toString();
     }
 
+    @Transactional
     public void releasedDeliveryReadyItem(List<DeliveryReadyItemViewDto> dtos) {
         Date date = Calendar.getInstance().getTime();
 
+        List<Integer> cidList = new ArrayList<>();
+        
         for(DeliveryReadyItemViewDto dto : dtos){
-            deliveryReadyItemRepository.findById(dto.getDeliveryReadyItem().getCid()).ifPresentOrElse(deliveryReadyItemEntity -> {
-                deliveryReadyItemEntity.setReleased(true).setReleasedAt(date);
-                deliveryReadyItemRepository.save(deliveryReadyItemEntity);
-            }, null);
-
+            cidList.add(dto.getDeliveryReadyItem().getCid());
         }
+        deliveryReadyItemRepository.updateReleasedAtByCid(cidList, date);
     }
 
     public List<DeliveryReadyItemExcelFormDto> getFromDtoByEntity(List<DeliveryReadyItemEntity> entities) {
@@ -325,6 +359,7 @@ public class DeliveryReadyService {
     public List<DeliveryReadyItemExcelFormDto> changeDuplicationEntity(List<DeliveryReadyItemExcelFormDto> entities) {
         List<DeliveryReadyItemExcelFormDto> newOrderList = new ArrayList<>();
 
+        // 주문번호 > 받는사람 > 상품명 > 상품상세 정렬
         entities.sort(Comparator.comparing(DeliveryReadyItemExcelFormDto::getOrderNumber)
                                 .thenComparing(DeliveryReadyItemExcelFormDto::getReceiver)
                                 .thenComparing(DeliveryReadyItemExcelFormDto::getProdName)
@@ -342,12 +377,13 @@ public class DeliveryReadyService {
             String resultStr = sb.toString();
             int prevOrderIdx = newOrderList.size()-1;   // 추가되는 데이터 리스트의 마지막 index
 
+            // 받는사람 + 주소 + 상품명 + 상품상세 : 중복인 경우
             if(!optionSet.add(resultStr)){
                 DeliveryReadyItemExcelFormDto prevProd = newOrderList.get(prevOrderIdx);
                 DeliveryReadyItemExcelFormDto currentProd = entities.get(i);
 
-                newOrderList.get(prevOrderIdx).setUnit(prevProd.getUnit() + currentProd.getUnit());
-                newOrderList.get(prevOrderIdx).setAllProdOrderNumber(prevProd.getProdOrderNumber() + " / " + currentProd.getProdOrderNumber());     // 총 상품번호
+                newOrderList.get(prevOrderIdx).setUnit(prevProd.getUnit() + currentProd.getUnit());     // 중복데이터의 수량을 더한다
+                newOrderList.get(prevOrderIdx).setAllProdOrderNumber(prevProd.getProdOrderNumber() + " / " + currentProd.getProdOrderNumber());     // 총 상품번호 수정
             }else{
                 newOrderList.add(entities.get(i));
             }

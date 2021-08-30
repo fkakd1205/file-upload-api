@@ -1,18 +1,13 @@
 package com.example.file.controller.api;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemExcelFormDto;
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
-import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.message.Message;
 import com.example.file.service.delivery_ready.DeliveryReadyService;
 
@@ -108,6 +103,22 @@ public class DeliveryReadyApiController {
 
         try{
             message.setData(deliveryReadyService.getDeliveryReadyViewReleasedData(currentDate));
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    @GetMapping("/view/release/{date1}&&{date2}")
+    public ResponseEntity<?> getDeliveryReadyViewReleased(@PathVariable(value = "date1") String date1, @PathVariable(value="date2") String date2) {
+        Message message = new Message();
+
+        try{
+            message.setData(deliveryReadyService.getDeliveryReadyViewReleased(date1, date2));
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
