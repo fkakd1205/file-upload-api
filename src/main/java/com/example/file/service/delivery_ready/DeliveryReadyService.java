@@ -270,9 +270,6 @@ public class DeliveryReadyService {
     }
 
     public List<DeliveryReadyItemViewProj> getDeliveryReadyViewReleased(String date1, String date2) {
-        // String start = date1.substring(1, 11);
-        // String end = date2.substring(1, 11);
-
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startDate = null;
         Date endDate = null;
@@ -284,21 +281,6 @@ public class DeliveryReadyService {
             e.printStackTrace();
         }
 
-        // // local시간 맞추기
-        // Calendar c = Calendar.getInstance();
-        // c.setTime(startDate);
-        // c.add(Calendar.DATE, 1);
-
-        // startDate = c.getTime();
-
-        // c.setTime(endDate);
-        // c.add(Calendar.DATE, 2);
-        // endDate = c.getTime();
-
-        log.info("startDate => {}", startDate);
-        log.info("endDate => {}", endDate);
-
-        // -9시간 설정을 안해줘도 백엔드에서 Date값을 계산해서 가져온다
         List<DeliveryReadyItemViewProj> releasedItems = deliveryReadyItemRepository.findSelectedReleased(true, startDate, endDate);
         
         return releasedItems;
@@ -334,7 +316,7 @@ public class DeliveryReadyService {
                     .setTransportNumber("").setProdName(entity.getProdName())
                     .setSender("스토어명").setSenderContact1("070-0000-0000").setOptionInfo(entity.getOptionInfo())
                     .setOptionManagementCode(entity.getOptionManagementCode()).setUnit(entity.getUnit())
-                    .setDeliveryMessage(entity.getDeliveryMessage()).setUnitA("").setAllProdOrderNumber(entity.getProdNumber());
+                    .setDeliveryMessage(entity.getDeliveryMessage()).setUnitA("").setAllProdOrderNumber(entity.getProdNumber()).setDuplication(false);
 
             formDtos.add(formDto);
         }
@@ -374,8 +356,20 @@ public class DeliveryReadyService {
             sb.append(entities.get(i).getProdName());
             sb.append(entities.get(i).getOptionInfo());
 
+            StringBuilder receiverSb = new StringBuilder();
+            receiverSb.append(entities.get(i).getReceiver());
+            receiverSb.append(entities.get(i).getReceiverContact1());
+            receiverSb.append(entities.get(i).getDestination());
+
             String resultStr = sb.toString();
+            String receiverStr = receiverSb.toString();
             int prevOrderIdx = newOrderList.size()-1;   // 추가되는 데이터 리스트의 마지막 index
+
+            // 받는사람 + 번호 + 주소 : 중복인 경우
+            if(!optionSet.add(receiverStr)){
+                newOrderList.get(prevOrderIdx).setDuplication(true);
+                entities.get(i).setDuplication(true);
+            }
 
             // 받는사람 + 주소 + 상품명 + 상품상세 : 중복인 경우
             if(!optionSet.add(resultStr)){
@@ -390,5 +384,11 @@ public class DeliveryReadyService {
         }
 
         return newOrderList;
+    }
+
+    public void deleteOneDeliveryReadyViewData(UUID itemId) {
+        deliveryReadyItemRepository.findByItemId(itemId).ifPresent(item -> {
+            deliveryReadyItemRepository.delete(item);
+        });
     }
 }

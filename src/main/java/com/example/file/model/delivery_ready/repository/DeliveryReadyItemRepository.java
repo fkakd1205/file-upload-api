@@ -2,7 +2,9 @@ package com.example.file.model.delivery_ready.repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.delivery_ready.proj.DeliveryReadyItemViewProj;
@@ -33,4 +35,7 @@ public interface DeliveryReadyItemRepository extends JpaRepository<DeliveryReady
     @Modifying
     @Query(value = "UPDATE delivery_ready_item AS dri SET dri.released=true, dri.released_at=:currentDate WHERE cid IN :cidList", nativeQuery = true)
     int updateReleasedAtByCid(List<Integer> cidList, Date currentDate);
+
+    @Query("SELECT dri FROM DeliveryReadyItemEntity dri WHERE dri.id=:itemId")
+    Optional<DeliveryReadyItemEntity> findByItemId(UUID itemId);
 }

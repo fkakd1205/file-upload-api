@@ -20,6 +20,8 @@ public class DeliveryReadyItemExcelFormDto {
     private String optionManagementCode;        // 옵션관리코드
     private Integer unit;        // 내품수량1
     private String deliveryMessage;     // 배송메시지
-    private String unitA;       // 수량(A타입)  // A타입?
+    private String unitA;       // 수량(A타입)
     private String allProdOrderNumber;      // 총 상품주문번호
+
+    private boolean duplication;    // 받는사람 + 번호 + 주소 : 중복 여부
 }
