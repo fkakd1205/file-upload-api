@@ -139,10 +139,24 @@ public class DeliveryReadyApiController {
     public ResponseEntity<?> deleteOneDeliveryReadyViewData(@PathVariable(value = "itemId") UUID itemId) {
         Message message = new Message();
 
-        log.info("itemId => {}", itemId);
-
         try{
             deliveryReadyService.deleteOneDeliveryReadyViewData(itemId);
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    @GetMapping("/view/updateOne/{itemId}")
+    public ResponseEntity<?> updateReleasedDeliveryReadyItem(@PathVariable(value = "itemId") UUID itemId) {
+        Message message = new Message();
+
+        try{
+            deliveryReadyService.updateReleasedDeliveryReadyItem(itemId);
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {

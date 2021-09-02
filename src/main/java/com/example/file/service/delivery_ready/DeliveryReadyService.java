@@ -304,6 +304,14 @@ public class DeliveryReadyService {
         deliveryReadyItemRepository.updateReleasedAtByCid(cidList, date);
     }
 
+    public void updateReleasedDeliveryReadyItem(UUID itemId) {
+        deliveryReadyItemRepository.findByItemId(itemId).ifPresentOrElse(item -> {
+            item.setReleased(false).setReleasedAt(null);
+
+            deliveryReadyItemRepository.save(item);
+        }, null);;
+    }
+
     public List<DeliveryReadyItemExcelFormDto> getFromDtoByEntity(List<DeliveryReadyItemEntity> entities) {
         List<DeliveryReadyItemExcelFormDto> formDtos = new ArrayList<>();
 
