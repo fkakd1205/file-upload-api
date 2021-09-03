@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemOptionCodeInfo;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
 import com.example.file.model.delivery_ready.proj.DeliveryReadyItemViewProj;
 
@@ -38,4 +39,8 @@ public interface DeliveryReadyItemRepository extends JpaRepository<DeliveryReady
 
     @Query("SELECT dri FROM DeliveryReadyItemEntity dri WHERE dri.id=:itemId")
     Optional<DeliveryReadyItemEntity> findByItemId(UUID itemId);
+
+    @Query(value = "select p.default_name, po.code, po.default_name, po.management_name from piaar_dev1.product_option po\n"
+         + "JOIN piaar_dev1.product p ON p.cid = po.product_cid", nativeQuery = true)
+    List<DeliveryReadyItemOptionCodeInfo> findByOptionInfo();
 }

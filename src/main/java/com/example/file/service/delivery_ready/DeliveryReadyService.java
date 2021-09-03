@@ -27,6 +27,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemExcelFormDto;
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemOptionCodeInfo;
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyFileEntity;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
@@ -310,6 +311,10 @@ public class DeliveryReadyService {
 
             deliveryReadyItemRepository.save(item);
         }, null);;
+    }
+
+    public List<DeliveryReadyItemOptionCodeInfo> searchDeliveryReadyItemProductInfo() {
+        return deliveryReadyItemRepository.findByOptionInfo();
     }
 
     public List<DeliveryReadyItemExcelFormDto> getFromDtoByEntity(List<DeliveryReadyItemEntity> entities) {

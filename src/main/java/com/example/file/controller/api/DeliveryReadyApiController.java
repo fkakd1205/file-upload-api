@@ -167,6 +167,38 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    @GetMapping("/view/searchList/productInfo")
+    public ResponseEntity<?> searchDeliveryReadyItemProductInfo() {
+        Message message = new Message();
+
+        try{
+            deliveryReadyService.searchDeliveryReadyItemProductInfo();
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
+    // @GetMapping("/view/updateOptionCode/{itemId}")
+    // public ResponseEntity<?> updateOptionManagementCode(@PathVariable(value = "itemId") UUID itemId) {
+    //     Message message = new Message();
+
+    //     try{
+    //         deliveryReadyService.updateOptionManagementCode(itemId);
+    //         message.setStatus(HttpStatus.OK);
+    //         message.setMessage("success");
+    //     } catch(Exception e) {
+    //         message.setStatus(HttpStatus.BAD_REQUEST);
+    //         message.setMessage("error");
+    //     }
+
+    //     return new ResponseEntity<>(message, message.getStatus());
+    // }
+
     @PostMapping("/view/download")
     public void downloadExcelFile(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> viewDtos) {
 
