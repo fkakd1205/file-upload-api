@@ -27,7 +27,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemExcelFormDto;
-import com.example.file.model.delivery_ready.dto.DeliveryReadyItemOptionCodeInfo;
+import com.example.file.model.delivery_ready.dto.DeliveryReadyItemOptionInfoProj;
 import com.example.file.model.delivery_ready.dto.DeliveryReadyItemViewDto;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyFileEntity;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
@@ -313,8 +313,17 @@ public class DeliveryReadyService {
         }, null);;
     }
 
-    public List<DeliveryReadyItemOptionCodeInfo> searchDeliveryReadyItemProductInfo() {
-        return deliveryReadyItemRepository.findByOptionInfo();
+    public List<DeliveryReadyItemOptionInfoProj> searchDeliveryReadyItemProductInfo() {
+        return deliveryReadyItemRepository.findAllOptionInfo();
+    }
+
+    public void updateDeliveryReadyItemOptionInfo(UUID itemId, String optionCode) {
+        // 해당 아이템만 옵션 변경? or 같은 상품의 옵션을 모두 변경?
+        deliveryReadyItemRepository.findByItemId(itemId).ifPresentOrElse(item -> {
+            item.setOptionManagementCode(optionCode);
+
+            deliveryReadyItemRepository.save(item);
+        }, null);
     }
 
     public List<DeliveryReadyItemExcelFormDto> getFromDtoByEntity(List<DeliveryReadyItemEntity> entities) {
