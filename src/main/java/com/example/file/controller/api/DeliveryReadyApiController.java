@@ -199,6 +199,22 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    @GetMapping("/view/updateOptions/{itemId}&&{optionCode}")
+    public ResponseEntity<?> updateDeliveryReadyItemsOptionInfo(@PathVariable(value = "itemId") UUID itemId, @PathVariable(value = "optionCode") String optionCode) {
+        Message message = new Message();
+        
+        try{
+            deliveryReadyService.updateDeliveryReadyItemsOptionInfo(itemId, optionCode);
+            message.setStatus(HttpStatus.OK);
+            message.setMessage("success");
+        } catch(Exception e) {
+            message.setStatus(HttpStatus.BAD_REQUEST);
+            message.setMessage("error");
+        }
+
+        return new ResponseEntity<>(message, message.getStatus());
+    }
+
     @PostMapping("/view/download")
     public void downloadExcelFile(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> viewDtos) {
 

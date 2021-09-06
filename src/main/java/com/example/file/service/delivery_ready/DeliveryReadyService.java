@@ -318,12 +318,46 @@ public class DeliveryReadyService {
     }
 
     public void updateDeliveryReadyItemOptionInfo(UUID itemId, String optionCode) {
-        // 해당 아이템만 옵션 변경? or 같은 상품의 옵션을 모두 변경?
         deliveryReadyItemRepository.findByItemId(itemId).ifPresentOrElse(item -> {
-            item.setOptionManagementCode(optionCode);
-
+            if(optionCode.equals("null")) {
+                item.setOptionManagementCode("");
+            }
+            else{
+                item.setOptionManagementCode(optionCode);
+            }
             deliveryReadyItemRepository.save(item);
+
         }, null);
+    }
+
+    public void updateDeliveryReadyItemsOptionInfo(UUID itemId, String optionCode) {
+        deliveryReadyItemRepository.findByItemId(itemId).ifPresentOrElse(item -> {
+            if(optionCode.equals("null")) {
+                item.setOptionManagementCode("");
+            }
+            else{
+                item.setOptionManagementCode(optionCode);
+            }
+            deliveryReadyItemRepository.save(item);
+
+            // 같은 상품의 옵션을 모두 변경
+            updateDeliveryReadyItemChangedOption(item, optionCode);
+
+        }, null);
+    }
+
+    public void updateDeliveryReadyItemChangedOption(DeliveryReadyItemEntity item, String optionCode) {
+        List<DeliveryReadyItemEntity> entities = deliveryReadyItemRepository.findByItems(item.getProdName(), item.getOptionInfo());
+
+        for(DeliveryReadyItemEntity entity : entities) {
+            if(optionCode.equals("null")) {
+                entity.setOptionManagementCode("");
+            }
+            else{
+                entity.setOptionManagementCode(optionCode);
+            }
+            deliveryReadyItemRepository.save(entity);
+        }
     }
 
     public List<DeliveryReadyItemExcelFormDto> getFromDtoByEntity(List<DeliveryReadyItemEntity> entities) {

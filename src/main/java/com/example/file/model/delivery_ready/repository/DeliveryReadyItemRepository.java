@@ -43,4 +43,7 @@ public interface DeliveryReadyItemRepository extends JpaRepository<DeliveryReady
     @Query("SELECT po.code AS optionCode, p.defaultName AS prodDefaultName, po.defaultName AS optionDefaultName, po.managementName AS optionManagementName FROM ProductOptionEntity po\n"
         + "JOIN ProductEntity p ON p.cid = po.productCid")
     List<DeliveryReadyItemOptionInfoProj> findAllOptionInfo();
+
+    @Query("SELECT dri FROM DeliveryReadyItemEntity dri WHERE dri.prodName=:prodName AND dri.optionInfo=:optionInfo")
+    List<DeliveryReadyItemEntity> findByItems(String prodName, String optionInfo);
 }
