@@ -1,4 +1,4 @@
-package com.example.file.model.delivery_ready.dto;
+package com.example.file.model.delivery_ready.proj;
 
 public interface DeliveryReadyItemOptionInfoProj {
     String getOptionCode();

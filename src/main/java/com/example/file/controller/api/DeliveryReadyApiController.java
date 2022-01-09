@@ -1,10 +1,7 @@
 package com.example.file.controller.api;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
@@ -37,13 +34,13 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@Slf4j
 @RequestMapping("/api/v1/delivery-ready")
 public class DeliveryReadyApiController {
     
     @Autowired
     private DeliveryReadyService deliveryReadyService;
 
+    // 1. 엑셀 업로드
     @PostMapping("/upload")
     public ResponseEntity<?> uploadDeliveryReadyExcelFile(@RequestParam("file") MultipartFile file) throws IOException {
         Message message = new Message();
@@ -70,6 +67,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    // 2. -1 엑셀 다운로드
     // 엑셀 파일 AWS S3업로드 후 DeliveryReadyFileEntity, DeliveryReadyItemEntity 생성
     @PostMapping("/store")
     public ResponseEntity<?> storeDeliveryReadyExcelFile(@RequestParam("file") MultipartFile file) throws IOException {
@@ -87,6 +85,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    // 4. 미출고 데이터 조회
     @GetMapping("/view/unreleased")
     public ResponseEntity<?> getDeliveryReadyViewUnreleasedData() {
         Message message = new Message();
@@ -103,22 +102,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
-    @GetMapping("/view/released/{currentDate}")
-    public ResponseEntity<?> getDeliveryReadyViewReleasedData(@PathVariable(value = "currentDate") String currentDate) {
-        Message message = new Message();
-
-        try{
-            message.setData(deliveryReadyService.getDeliveryReadyViewReleasedData(currentDate));
-            message.setStatus(HttpStatus.OK);
-            message.setMessage("success");
-        } catch(Exception e) {
-            message.setStatus(HttpStatus.BAD_REQUEST);
-            message.setMessage("error");
-        }
-
-        return new ResponseEntity<>(message, message.getStatus());
-    }
-
+    // 5. 날짜 별 출고 데이터 조회
     @GetMapping("/view/release/{date1}&&{date2}")
     public ResponseEntity<?> getDeliveryReadyViewReleased(@PathVariable(value = "date1") String date1, @PathVariable(value="date2") String date2) {
         Message message = new Message();
@@ -135,6 +119,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    // 6. -1 데이터 개별 삭제
     @GetMapping("/view/deleteOne/{itemId}")
     public ResponseEntity<?> deleteOneDeliveryReadyViewData(@PathVariable(value = "itemId") UUID itemId) {
         Message message = new Message();
@@ -150,7 +135,8 @@ public class DeliveryReadyApiController {
 
         return new ResponseEntity<>(message, message.getStatus());
     }
-
+    
+    // 6. -2 출고데이터 취소
     @GetMapping("/view/updateOne/{itemId}")
     public ResponseEntity<?> updateReleasedDeliveryReadyItem(@PathVariable(value = "itemId") UUID itemId) {
         Message message = new Message();
@@ -167,12 +153,13 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
-    @GetMapping("/view/searchList/productInfo")
-    public ResponseEntity<?> searchDeliveryReadyItemProductInfo() {
+    // 7. -1 옵션관리 코드 조회
+    @GetMapping("/view/searchList/optionInfo")
+    public ResponseEntity<?> searchDeliveryReadyItemOptionInfo() {
         Message message = new Message();
 
         try{
-            message.setData(deliveryReadyService.searchDeliveryReadyItemProductInfo());
+            message.setData(deliveryReadyService.searchDeliveryReadyItemOptionInfo());
             message.setStatus(HttpStatus.OK);
             message.setMessage("success");
         } catch(Exception e) {
@@ -183,6 +170,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    // 7. -2 선택 item 옵션관리코드 수정
     @GetMapping("/view/updateOption/{itemId}&&{optionCode}")
     public ResponseEntity<?> updateDeliveryReadyItemOptionInfo(@PathVariable(value = "itemId") UUID itemId, @PathVariable(value = "optionCode") String optionCode) {
         Message message = new Message();
@@ -199,6 +187,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    // 7. -3 선택 item 옵션관리코드 수정 후 동일 상품에 옵션관리코드 일괄 적용
     @GetMapping("/view/updateOptions/{itemId}&&{optionCode}")
     public ResponseEntity<?> updateDeliveryReadyItemsOptionInfo(@PathVariable(value = "itemId") UUID itemId, @PathVariable(value = "optionCode") String optionCode) {
         Message message = new Message();
@@ -215,6 +204,7 @@ public class DeliveryReadyApiController {
         return new ResponseEntity<>(message, message.getStatus());
     }
 
+    // 9. 다운로드 시 중복데이터 함치기 및 셀 색상 변경
     @PostMapping("/view/download")
     public void downloadExcelFile(HttpServletResponse response, @RequestBody List<DeliveryReadyItemViewDto> viewDtos) {
 

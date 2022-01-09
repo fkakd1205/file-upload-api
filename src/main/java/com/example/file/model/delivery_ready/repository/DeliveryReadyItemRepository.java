@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import com.example.file.model.delivery_ready.dto.DeliveryReadyItemOptionInfoProj;
 import com.example.file.model.delivery_ready.entity.DeliveryReadyItemEntity;
+import com.example.file.model.delivery_ready.proj.DeliveryReadyItemOptionInfoProj;
 import com.example.file.model.delivery_ready.proj.DeliveryReadyItemViewProj;
 
 import org.springframework.data.jpa.repository.JpaRepository;
